@@ -433,11 +433,11 @@ namespace Nats
             }
             else if (tokens.Length > 4)
             {
-                if (int.TryParse(tokens[3], out sid) &&
+                if (int.TryParse(tokens[2], out sid) &&
                     int.TryParse(tokens[4], out len) &&
                     len >= 0 && len < MAX_MSG_LEN)
                 {
-                    return new Message(sid, tokens[1], tokens[2], len);
+                    return new Message(sid, tokens[1], tokens[3], len);
                 }
             }
             return null;
