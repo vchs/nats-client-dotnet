@@ -168,13 +168,25 @@ namespace Nats
             }
         }
 
-        public bool Publish(string topic, string message)
+        public bool Publish(string topic, string message, string reply = "")
         {
             ThrowIfDisposed();
             lock (stateLock)
             {
-                return WhenConnected((conn) => SendPublish(conn, topic, message));
+                return WhenConnected((conn) => SendPublish(conn, topic, message, reply));
             }
+        }
+
+        public int Request(string topic, string message, Action<string, string> handler)
+        {
+            ThrowIfDisposed();
+            string inbox = Guid.NewGuid().ToString("N");
+            var sid = this.Subscribe(inbox, (msg, reply) =>
+            {
+                handler(msg, reply);
+            });
+            this.Publish(topic, message, inbox);
+            return sid;
         }
 
         private void BuildConnectMsg(Uri natsUrl)
@@ -353,9 +365,9 @@ namespace Nats
             conn.Send("UNSUB " + sid + " 0");
         }
 
-        private void SendPublish(Connection conn, string topic, string message)
+        private void SendPublish(Connection conn, string topic, string message, string reply)
         {
-            conn.Send(new string[]{ "PUB " + topic + " " + message.Length, message });
+            conn.Send(new string[] { "PUB " + topic + " " + reply + " " + message.Length, message });
         }
 
         private void Processing()
