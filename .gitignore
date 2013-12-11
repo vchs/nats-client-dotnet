@@ -1,5 +1,5 @@
 /bin
 /obj
-/*.sln
 *.pidb
 *.userprefs
+test-results
