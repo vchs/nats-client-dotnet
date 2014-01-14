@@ -430,16 +430,16 @@ namespace Nats
                 }
             }
 
-            _connectMsg = "CONNECT { \"verbose\":false, \"pedantic\":false ";
+            _connectMsg = "CONNECT { \"verbose\":false, \"pedantic\":false";
             if (user != null)
             {
-                _connectMsg += "\"user\":\"" + user.Replace("\"", "\\\"") + "\", ";
+                _connectMsg += ", \"user\":\"" + user.Replace("\"", "\\\"") + "\"";
             }
             if (pass != null)
             {
-                _connectMsg += "\"pass\":\"" + pass.Replace("\"", "\\\"") + "\", ";
+                _connectMsg += ", \"pass\":\"" + pass.Replace("\"", "\\\"") + "\"";
             }
-            _connectMsg += "}";
+            _connectMsg += " }";
         }
 
         private void Dispose(bool disposing)
