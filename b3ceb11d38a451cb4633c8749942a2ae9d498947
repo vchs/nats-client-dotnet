@@ -1,0 +1,8 @@
+Code-Review+2: Yuan Zhuang <yuanzhuang@vmware.com>
+Verified+1: Yuan Zhuang <yuanzhuang@vmware.com>
+Code-Review+2: Yisui Hu <yisuih@vmware.com>
+Submitted-by: Yuan Zhuang <yuanzhuang@vmware.com>
+Submitted-at: Mon, 17 Mar 2014 07:53:54 +0000
+Reviewed-on: http://tempest-reviews.eng.vmware.com/2380
+Project: nats_client_dotnet
+Branch: refs/heads/master
