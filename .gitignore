@@ -3,3 +3,6 @@ obj
 *.pidb
 *.userprefs
 test-results
+
+
+packages/
