@@ -30,6 +30,39 @@ namespace NatsClientTest
         }
 
         [Test]
+        public void NatsClient_PubSub_Queue()
+        {
+            string recvMsg = null;
+            int counter = 0;
+            using (var nats1 = new NatsClient(NatsUrl))
+            using (var nats2 = new NatsClient(NatsUrl))
+            using (var waitHandle = new ManualResetEvent(false))
+            {
+                nats1.Connect();
+                nats1.Subscribe("test", new Options("queue"), (msg, source) => {
+                    Console.WriteLine("Received: {0}", msg);
+                    recvMsg = msg;
+                    counter += 1;
+                    waitHandle.Set();
+                });
+
+                nats2.Connect();
+                nats2.Subscribe("test", new Options("queue"), (msg, source) =>
+                {
+                    Console.WriteLine("Received: {0}", msg);
+                    recvMsg = msg;
+                    counter += 1;
+                    waitHandle.Set();
+                });
+
+                nats2.Publish("test", "Hello");
+                waitHandle.WaitOne(1000);
+            }
+            Assert.AreEqual("Hello", recvMsg);
+            Assert.AreEqual(1, counter);
+        }
+
+        [Test]
         public void NatsClient_Request()
         {
             string response = null;
