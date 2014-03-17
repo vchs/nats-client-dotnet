@@ -1,0 +1,7 @@
+Code-Review+2: Yisui Hu <yisuih@vmware.com>
+Verified+1: Khalil Zhang <khalilz@vmware.com>
+Submitted-by: Andrew Liu <aliu@vmware.com>
+Submitted-at: Mon, 17 Mar 2014 05:18:28 +0000
+Reviewed-on: http://tempest-reviews.eng.vmware.com/2378
+Project: nats_client_dotnet
+Branch: refs/heads/master
