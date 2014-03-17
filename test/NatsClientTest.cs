@@ -18,7 +18,7 @@ namespace NatsClientTest
             using (var waitHandle = new ManualResetEvent(false))
             {
                 nats.Connect();
-                nats.Subscribe("test", (msg, source) => {
+                nats.Subscribe("test", new Options(), (msg, source) => {
                     Console.WriteLine("Received: {0}", msg);
                     recvMsg = msg;
                     waitHandle.Set();
@@ -30,6 +30,39 @@ namespace NatsClientTest
         }
 
         [Test]
+        public void NatsClient_PubSub_Queue()
+        {
+            string recvMsg = null;
+            int counter = 0;
+            using (var nats_one = new NatsClient(NatsUrl))
+            using (var nats_two = new NatsClient(NatsUrl))
+            using (var waitHandle = new ManualResetEvent(false))
+            {
+                nats_one.Connect();
+                nats_one.Subscribe("test", new Options("queue"), (msg, source) => {
+                    Console.WriteLine("Received: {0}", msg);
+                    recvMsg = msg;
+                    counter += 1;
+                    waitHandle.Set();
+                });
+
+                nats_two.Connect();
+                nats_two.Subscribe("test", new Options("queue"), (msg, source) =>
+                {
+                    Console.WriteLine("Received: {0}", msg);
+                    recvMsg = msg;
+                    counter += 1;
+                    waitHandle.Set();
+                });
+
+                nats_two.Publish("test", "Hello");
+                waitHandle.WaitOne(1000);
+            }
+            Assert.AreEqual("Hello", recvMsg);
+            Assert.AreEqual(1, counter);
+        }
+
+        [Test]
         public void NatsClient_Request()
         {
             string response = null;
@@ -38,7 +71,7 @@ namespace NatsClientTest
             using (var waitHandle = new ManualResetEvent(false))
             {
                 natsSvc.Connect();
-                natsSvc.Subscribe("test-request", (msg, source) => {
+                natsSvc.Subscribe("test-request", new Options(), (msg, source) => {
                     Console.WriteLine("Request: {0}", msg);
                     if (string.IsNullOrEmpty(source))
                     {
@@ -68,7 +101,7 @@ namespace NatsClientTest
             using (var waitHandle = new AutoResetEvent(false))
             {
                 natsSvc.Connect();
-                natsSvc.Subscribe("test-request", (msg, source) => {
+                natsSvc.Subscribe("test-request", new Options(), (msg, source) => {
                     Console.WriteLine("Request: {0}", msg);
                     if (string.IsNullOrEmpty(source))
                     {

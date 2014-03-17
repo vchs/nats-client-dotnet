@@ -8,18 +8,39 @@ using System.Threading;
 
 namespace Nats
 {
+    public sealed class Options
+    {
+        public string Queue { get; private set; }
+
+        public Options()
+        {
+            Queue = "";
+        }
+
+        public Options(string queue)
+        {
+            Queue = queue;
+        }
+
+    }
+
+
     sealed class Subscription
     {
+
         public int Id { get; private set; }
 
         public string Topic { get; private set; }
 
+        public Options Options { get; private set; }
+
         public Action<int, string, string> Handler { get; private set; }
 
-        public Subscription(int id, string topic, Action<int, string, string> handler)
+        public Subscription(int id, string topic, Options options, Action<int, string, string> handler)
         {
             Id = id;
             Topic = topic;
+            Options = options;
             Handler = handler;
         }
     }
@@ -160,6 +181,10 @@ namespace Nats
         /// <param name='topic'>
         /// Topic.
         /// </param>
+        /// <param name="options">
+        /// Options.
+        /// Current avialble options: queue
+        /// </param>
         /// <param name='messageHandler'>
         /// Message handler.
         /// Three arguments are: subscriptionId, message, replyTopic
@@ -171,10 +196,11 @@ namespace Nats
         /// <remarks>
         /// messageHandler may be invoked before this function returns as this is a multi-threading library
         /// </remarks>
-        public int Subscribe(string topic, Action<int, string, string> messageHandler)
+        /// 
+        public int Subscribe(string topic, Options options, Action<int, string, string> messageHandler)
         {
             ThrowIfDisposed();
-            var sub = new Subscription(Interlocked.Increment(ref _sidBase), topic, messageHandler);
+            var sub = new Subscription(Interlocked.Increment(ref _sidBase), topic, options, messageHandler);
             lock (_stateLock)
             {
                 _subscriptions.Add(sub.Id, sub);
@@ -184,6 +210,54 @@ namespace Nats
                 }
             }
             return sub.Id;
+        }
+
+        /// <summary>
+        /// Subscribe the specified topic and invokes messageHandler when message arrives.
+        /// </summary>
+        /// <param name='topic'>
+        /// Topic.
+        /// </param>
+        /// <param name='messageHandler'>
+        /// Message handler.
+        /// Three arguments are: subscriptionId, message, replyTopic
+        /// replyTopic can be null if no reply is expected
+        /// </param>
+        /// <returns>
+        /// Subscription Id
+        /// </returns>
+        /// <remarks>
+        /// messageHandler may be invoked before this function returns as this is a multi-threading library
+        /// </remarks>
+        /// 
+        public int Subscribe(string topic, Action<int, string, string> messagehandler)
+        {
+            return Subscribe(topic, new Options(), messagehandler);
+        }
+
+        /// <summary>
+        /// Subscribe the specified topic and invokes messageHandler when message arrives.
+        /// </summary>
+        /// <param name='topic'>
+        /// Topic.
+        /// </param>
+        /// <param name="options">
+        /// Options.
+        /// </param>
+        /// <param name='messageHandler'>
+        /// Message handler.
+        /// Arguments are: message, replyTopic
+        /// replyTopic can be null if no reply is expected
+        /// </param>
+        /// <returns>
+        /// Subscription Id
+        /// </returns>
+        /// <remarks>
+        /// messageHandler may be invoked before this function returns as this is a multi-threading library
+        /// </remarks>
+        public int Subscribe(string topic, Options options, Action<string, string> messageHandler)
+        {
+            return Subscribe(topic, options, (sid, msg, reply) => messageHandler(msg, reply));
         }
 
         /// <summary>
@@ -205,7 +279,31 @@ namespace Nats
         /// </remarks>
         public int Subscribe(string topic, Action<string, string> messageHandler)
         {
-            return Subscribe(topic, (sid, msg, reply) => messageHandler(msg, reply));
+            return Subscribe(topic, new Options(), messageHandler);
+        }
+
+        /// <summary>
+        /// Subscribe the specified topic and invokes messageHandler when message arrives.
+        /// </summary>
+        /// <param name='topic'>
+        /// Topic.
+        /// </param>
+        /// <param name="options">
+        /// Options.
+        /// </param>
+        /// <param name='messageHandler'>
+        /// Message handler.
+        /// Argument is: message
+        /// </param>
+        /// <returns>
+        /// Subscription Id
+        /// </returns>
+        /// <remarks>
+        /// messageHandler may be invoked before this function returns as this is a multi-threading library
+        /// </remarks>
+        public int Subscribe(string topic, Options options, Action<string> messageHandler)
+        {
+            return Subscribe(topic, options, (sid, msg, reply) => messageHandler(msg));
         }
 
         /// <summary>
@@ -226,7 +324,7 @@ namespace Nats
         /// </remarks>
         public int Subscribe(string topic, Action<string> messageHandler)
         {
-            return Subscribe(topic, (sid, msg, reply) => messageHandler(msg));
+            return Subscribe(topic, new Options(), messageHandler);
         }
 
         /// <summary>
@@ -571,7 +669,8 @@ namespace Nats
 
         private void SendSubscribe(Connection conn, Subscription sub)
         {
-            conn.Send("SUB " + sub.Topic + "   " + sub.Id);
+            string queue = sub.Options.Queue;
+            conn.Send("SUB " + sub.Topic + " " + queue + " " + sub.Id);  
         }
 
         private void SendUnsubscribe(Connection conn, long sid)
