@@ -684,6 +684,9 @@ namespace Nats
             while (!_cancellation.Token.IsCancellationRequested)
             {
                 WhenConnected((conn) => ReceiveMessages(conn));
+                //TODO probably we can have better retries.
+                // For now, it waits for one second for every retry.
+                Thread.Sleep(1000);
             }
             Debug.WriteLine("NATS-CLIENT-PROC: STOP");
         }
