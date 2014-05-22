@@ -684,6 +684,7 @@ namespace Nats
             while (!_cancellation.Token.IsCancellationRequested)
             {
                 WhenConnected((conn) => ReceiveMessages(conn));
+                Thread.Sleep(1000);
             }
             Debug.WriteLine("NATS-CLIENT-PROC: STOP");
         }
